@@ -1,4 +1,5 @@
 import os
+import glob
 import zipfile
 import pandas as pd
 from pathlib import Path
@@ -29,6 +30,19 @@ class StorageManager:
         if os.path.exists(filepath):
             return pd.read_parquet(filepath)
         return None
+    
+    def load_latest_file(self, directory: str, data_type: str, project_code: str) -> Optional[pd.DataFrame]:
+        """Find and load the latest parquet file matching the pattern"""
+        pattern = os.path.join(directory, f"data_budget_{data_type}_{project_code}_v*.parquet")
+        files = glob.glob(pattern)
+        
+        if not files:
+            return None
+        
+        # Sort by modification time to get the latest
+        latest_file = max(files, key=os.path.getmtime)
+        print(f"Loading existing data from: {latest_file}")
+        return pd.read_parquet(latest_file)
     
     def save_local(self, df: pd.DataFrame, base_path: str, formats: list = None):
         """Save dataframe to local files in multiple formats"""

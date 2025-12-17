@@ -17,8 +17,9 @@ class Config:
     
     # File paths
     data_dir: str = "data"
-    income_filename: str = "budget_income"
-    expense_filename: str = "budget_expense"
+    project_code: str = "145"
+    income_filename_template: str = "data_budget_income_{code}_v{version}"
+    expense_filename_template: str = "data_budget_expenses_{code}_v{version}"
     
     # API UUIDs
     income_uuid: str = "77b109a3-1c64-42db-9f58-6d79b42ba198"
