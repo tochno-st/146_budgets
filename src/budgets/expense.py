@@ -29,9 +29,11 @@ class ExpenseLoader:
         
         if date_from:
             if date_from < first_date[:7]:
-                raise ValueError(f"Data not available. First available: {first_date[:7]}")
+                print(f"Warning: Requested date {date_from} is before first available. Using {first_date[:7]}")
+                date_from = first_date[:7]
             if date_from > latest_date[:7]:
-                raise ValueError(f"Data not yet available. Latest: {latest_date[:7]}")
+                print(f"No data available yet for {date_from}. Latest available: {latest_date[:7]}")
+                return []
             date_from_item = next((d for d in dates if d[0].startswith(date_from)), None)
         else:
             if existing_dates:
@@ -46,9 +48,11 @@ class ExpenseLoader:
         
         if date_to:
             if date_to < first_date[:7]:
-                raise ValueError(f"Data not available. First available: {first_date[:7]}")
+                print(f"Warning: Requested end date {date_to} is before first available. Using {first_date[:7]}")
+                date_to = first_date[:7]
             if date_to > latest_date[:7]:
-                raise ValueError(f"Data not yet available. Latest: {latest_date[:7]}")
+                print(f"Warning: Requested end date {date_to} not yet available. Using latest: {latest_date[:7]}")
+                date_to = latest_date[:7]
             date_to_item = next((d for d in dates if d[0].startswith(date_to)), None)
         else:
             date_to_item = dates[-1]
