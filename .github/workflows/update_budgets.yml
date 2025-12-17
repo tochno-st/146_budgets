@@ -59,7 +59,18 @@ jobs:
           
           if [ -n "$LATEST_TAG" ]; then
             echo "Downloading from release: $LATEST_TAG"
-            gh release download "$LATEST_TAG" --pattern "*.parquet" --dir data/processed || echo "No parquet files in release"
+            # Download parquet zip files and extract them
+            gh release download "$LATEST_TAG" --pattern "*_parquet.zip" --dir data/processed || echo "No parquet zip files in release"
+            
+            # Extract parquet files from zips
+            cd data/processed
+            for zipfile in *_parquet.zip; do
+              if [ -f "$zipfile" ]; then
+                unzip -o "$zipfile"
+                rm "$zipfile"
+              fi
+            done
+            cd ../..
           else
             echo "No previous releases found, starting fresh"
           fi
@@ -104,12 +115,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Check if any files were generated
-          if ls data/processed/*.parquet 1>/dev/null 2>&1; then
+          # Check if any zip files were generated
+          if ls data/processed/*.zip 1>/dev/null 2>&1; then
             gh release create ${{ steps.version.outputs.version }} \
-              data/processed/*.parquet \
-              data/processed/*.csv \
-              data/processed/*.xlsx \
+              data/processed/*_parquet.zip \
+              data/processed/*_csv.zip \
+              data/processed/*_xlsx.zip \
               --title "Budget Data ${{ steps.version.outputs.version }}" \
               --notes "Automated budget data update for $(date +%Y-%m)" \
               --latest
@@ -122,8 +133,8 @@ jobs:
         with:
           name: budget-data-${{ steps.version.outputs.version }}
           path: |
-            data/processed/*.parquet
-            data/processed/*.csv
-            data/processed/*.xlsx
+            data/processed/*_parquet.zip
+            data/processed/*_csv.zip
+            data/processed/*_xlsx.zip
           retention-days: 30
 

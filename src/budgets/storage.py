@@ -1,4 +1,5 @@
 import os
+import zipfile
 import pandas as pd
 from pathlib import Path
 from typing import Optional
@@ -48,6 +49,24 @@ class StorageManager:
             saved_files.append(filepath)
             print(f"Saved: {filepath}")
         return saved_files
+    
+    def create_zip_files(self, saved_files: list) -> list:
+        """Create separate zip files for each format (parquet, csv, xlsx)"""
+        zip_files = []
+        for filepath in saved_files:
+            path = Path(filepath)
+            fmt = path.suffix.lstrip(".")  # Get format without dot
+            base_name = path.stem  # Get filename without extension
+            zip_name = f"{base_name}_{fmt}.zip"
+            zip_path = path.parent / zip_name
+            
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                zf.write(filepath, path.name)
+            
+            zip_files.append(str(zip_path))
+            print(f"Created zip: {zip_path}")
+        
+        return zip_files
     
     def upload_to_s3(self, local_path: str, s3_folder: str, version: str = None):
         """Upload file to S3 bucket"""

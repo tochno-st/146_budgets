@@ -47,14 +47,18 @@ class BudgetUpdater:
         base_path = os.path.join(output_dir, self.config.income_filename)
         saved_files = self.storage.save_local(merged_df, base_path)
         
+        # Create zip files for each format
+        zip_files = self.storage.create_zip_files(saved_files)
+        
         if s3_folder:
             ver = version or self._get_version()
-            for f in saved_files:
+            for f in zip_files:
                 self.storage.upload_to_s3(f, s3_folder, ver)
         
         return {
             "status": "updated",
             "files": saved_files,
+            "zip_files": zip_files,
             "rows_added": len(new_df),
             "total_rows": len(merged_df)
         }
@@ -85,14 +89,18 @@ class BudgetUpdater:
         base_path = os.path.join(output_dir, self.config.expense_filename)
         saved_files = self.storage.save_local(merged_df, base_path)
         
+        # Create zip files for each format
+        zip_files = self.storage.create_zip_files(saved_files)
+        
         if s3_folder:
             ver = version or self._get_version()
-            for f in saved_files:
+            for f in zip_files:
                 self.storage.upload_to_s3(f, s3_folder, ver)
         
         return {
             "status": "updated",
             "files": saved_files,
+            "zip_files": zip_files,
             "rows_added": len(new_df),
             "total_rows": len(merged_df)
         }
