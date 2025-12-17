@@ -134,7 +134,7 @@ jobs:
         run: |
           # Check if any zip files were generated
           if ls data/processed/data_budget_*.zip 1>/dev/null 2>&1; then
-            gh release create ${{ steps.version.outputs.version }} \
+            gh release create "${{ steps.version.outputs.version }}" \
               data/processed/data_budget_*_parquet.zip \
               data/processed/data_budget_*_csv.zip \
               data/processed/data_budget_*_xlsx.zip \
