@@ -4,7 +4,6 @@ from .normalizer import DataNormalizer
 from .storage import StorageManager
 from .income import IncomeLoader
 from .expense import ExpenseLoader
-from .main import BudgetUpdater
 
 __version__ = "0.1.0"
 __all__ = [
@@ -14,6 +13,11 @@ __all__ = [
     "StorageManager",
     "IncomeLoader",
     "ExpenseLoader",
-    "BudgetUpdater",
 ]
+
+
+def get_updater():
+    """Lazy import of BudgetUpdater to avoid circular import issues"""
+    from .main import BudgetUpdater
+    return BudgetUpdater
 
