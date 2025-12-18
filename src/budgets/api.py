@@ -10,9 +10,22 @@ class BudgetAPI:
         self.headers = {"User-agent": self.config.user_agent}
     
     def _get(self, url: str) -> dict:
-        r = requests.get(url, headers=self.headers)
-        r.raise_for_status()
-        return r.json()
+        """Make GET request with retry logic"""
+        last_exception = None
+        
+        for attempt in range(self.config.max_retries):
+            try:
+                r = requests.get(url, headers=self.headers, timeout=30)
+                r.raise_for_status()
+                return r.json()
+            except (requests.RequestException, requests.JSONDecodeError) as e:
+                last_exception = e
+                if attempt < self.config.max_retries - 1:
+                    wait_time = self.config.retry_delay * (attempt + 1)  # exponential backoff
+                    print(f"Request failed (attempt {attempt + 1}/{self.config.max_retries}): {e}. Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+        
+        raise last_exception
     
     def get_regions(self) -> List[Tuple[str, str]]:
         """Get list of available regions as [(code, name), ...]"""
