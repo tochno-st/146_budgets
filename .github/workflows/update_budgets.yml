@@ -151,9 +151,7 @@ jobs:
             # Build release notes with added months info
             NOTES="Automated budget data update"
             if [ -n "${{ steps.updater.outputs.added_months }}" ]; then
-              NOTES="${NOTES}
-
-${{ steps.updater.outputs.added_months }}"
+              NOTES=$(printf "%s\n\n%s" "$NOTES" "${{ steps.updater.outputs.added_months }}")
             fi
             
             gh release create "${{ steps.version.outputs.version }}" \
