@@ -90,7 +90,9 @@ class IncomeLoader:
         if not results:
             return pd.DataFrame()
         
+        print(f"[Download] Creating DataFrame from {len(results)} rows...")
         df = pd.DataFrame(results, columns=INCOME_COLUMNS)
         df = df.drop(columns=["code"])
+        print("[Download] Starting normalization...")
         return self.normalizer.normalize_income(df)
 

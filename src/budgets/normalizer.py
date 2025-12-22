@@ -17,6 +17,7 @@ class DataNormalizer:
     
     def normalize_regions(self, df: pd.DataFrame, region_col: str = "region") -> pd.DataFrame:
         """Normalize region names and add okato, oktmo, object_level columns"""
+        print(f"[Normalize] Matching regions for {len(df)} rows...")
         df = self.matcher.match_dataframe(
             df,
             region_col,
@@ -25,18 +26,24 @@ class DataNormalizer:
             threshold=self.config.normalizer_threshold
         ).drop(columns=[region_col, "levenshtein_score"])
         
+        print("[Normalize] Attaching okato, oktmo, level fields...")
         df = self.matcher.attach_fields(df, "ter", ["okato", "oktmo", "level"])
         df = df.rename(columns={"ter": "object_name", "level": "object_level"})
+        print("[Normalize] Region normalization complete")
         return df
     
     def normalize_income(self, df: pd.DataFrame) -> pd.DataFrame:
         """Full normalization pipeline for income data"""
+        print(f"[Normalize] Starting income normalization for {len(df)} rows...")
+        
+        print("[Normalize] Setting income levels...")
         df.loc[df["income_part"] == "ИТОГО ДОХОДОВ ", "income_level"] = 0
         df["year"] = df["year"].astype(int)
         df["month"] = df["month"].astype(int)
         
         df = self.normalize_regions(df)
         
+        print("[Normalize] Reordering columns...")
         columns_order = [
             "year", "month", "income_level", "income_part", "plan",
             "adj_plan_consolidated", "adj_plan_regional", "adj_plan_growth_rate",
@@ -46,6 +53,7 @@ class DataNormalizer:
         ]
         df = df[columns_order]
         
+        print("[Normalize] Applying column types...")
         # Apply column types for parquet optimization
         column_types = {
             'year': 'int16',
@@ -66,16 +74,21 @@ class DataNormalizer:
             'oktmo': 'string',
             'object_level': 'string'
         }
+        print("[Normalize] Income normalization complete!")
         return df.astype(column_types)
     
     def normalize_expense(self, df: pd.DataFrame) -> pd.DataFrame:
         """Full normalization pipeline for expense data"""
+        print(f"[Normalize] Starting expense normalization for {len(df)} rows...")
+        
+        print("[Normalize] Fixing expense levels...")
         df = self.fix_expense_levels(df)
         df["year"] = df["year"].astype(int)
         df["month"] = df["month"].astype(int)
         
         df = self.normalize_regions(df)
         
+        print("[Normalize] Reordering columns...")
         columns_order = [
             "year", "month", "expense_level", "expense_part", "plan",
             "adj_plan_consolidated", "adj_plan_regional", "adj_plan_growth_rate",
@@ -85,6 +98,7 @@ class DataNormalizer:
         ]
         df = df[columns_order]
         
+        print("[Normalize] Applying column types...")
         # Apply column types for parquet optimization
         column_types = {
             'year': 'int16',
@@ -105,6 +119,7 @@ class DataNormalizer:
             'oktmo': 'string',
             'object_level': 'string'
         }
+        print("[Normalize] Expense normalization complete!")
         return df.astype(column_types)
     
     def fix_expense_levels(self, df: pd.DataFrame) -> pd.DataFrame:
