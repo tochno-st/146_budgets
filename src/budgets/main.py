@@ -10,6 +10,7 @@ from .config import Config
 from .storage import StorageManager
 from .income import IncomeLoader
 from .expense import ExpenseLoader
+from .normalizer import DataNormalizer
 
 
 class BudgetUpdater:
@@ -19,6 +20,7 @@ class BudgetUpdater:
         self.storage = StorageManager(self.config)
         self.income_loader = IncomeLoader(self.config)
         self.expense_loader = ExpenseLoader(self.config)
+        self.normalizer = DataNormalizer(self.config)
     
     def _get_version(self, output_dir: str = None) -> str:
         """Generate version string with run number if multiple runs per day"""
@@ -128,6 +130,8 @@ class BudgetUpdater:
             return {"status": "no_update", "files": []}
         
         merged_df = self.storage.merge_data(old_df, new_df)
+        # Apply expense_level fixes to all data (including previously gathered)
+        merged_df = self.normalizer.fix_expense_levels(merged_df)
         
         # Generate version and filename
         ver = version or self._get_version(output_dir)

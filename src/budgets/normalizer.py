@@ -44,11 +44,33 @@ class DataNormalizer:
             "growth_rate_federal_district", "growth_rate_russia",
             "object_name", "okato", "oktmo", "object_level"
         ]
-        return df[columns_order]
+        df = df[columns_order]
+        
+        # Apply column types for parquet optimization
+        column_types = {
+            'year': 'int16',
+            'month': 'int8',
+            'income_level': 'int8',
+            'income_part': 'string',
+            'plan': 'float64',
+            'adj_plan_consolidated': 'float64',
+            'adj_plan_regional': 'float64',
+            'adj_plan_growth_rate': 'float64',
+            'execution_consolidated': 'float64',
+            'execution_regional': 'float64',
+            'growth_rate_regional': 'float64',
+            'growth_rate_federal_district': 'float64',
+            'growth_rate_russia': 'float64',
+            'object_name': 'string',
+            'okato': 'string',
+            'oktmo': 'string',
+            'object_level': 'string'
+        }
+        return df.astype(column_types)
     
     def normalize_expense(self, df: pd.DataFrame) -> pd.DataFrame:
         """Full normalization pipeline for expense data"""
-        df.loc[df["expense_part"] == "ИТОГО РАСХОДОВ ", "expense_level"] = 0
+        df = self.fix_expense_levels(df)
         df["year"] = df["year"].astype(int)
         df["month"] = df["month"].astype(int)
         
@@ -61,5 +83,33 @@ class DataNormalizer:
             "growth_rate_federal_district", "growth_rate_russia",
             "object_name", "okato", "oktmo", "object_level"
         ]
-        return df[columns_order]
+        df = df[columns_order]
+        
+        # Apply column types for parquet optimization
+        column_types = {
+            'year': 'int16',
+            'month': 'int8',
+            'expense_level': 'int8',
+            'expense_part': 'string',
+            'plan': 'float64',
+            'adj_plan_consolidated': 'float64',
+            'adj_plan_regional': 'float64',
+            'adj_plan_growth_rate': 'float64',
+            'execution_consolidated': 'float64',
+            'execution_regional': 'float64',
+            'growth_rate_regional': 'float64',
+            'growth_rate_federal_district': 'float64',
+            'growth_rate_russia': 'float64',
+            'object_name': 'string',
+            'okato': 'string',
+            'oktmo': 'string',
+            'object_level': 'string'
+        }
+        return df.astype(column_types)
+    
+    def fix_expense_levels(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Fix expense_level=0 for total expense rows. Can be applied to existing data."""
+        df = df.copy()
+        df.loc[df["expense_part"] == "Расходы бюджета - ИТОГО", "expense_level"] = 0
+        return df
 
