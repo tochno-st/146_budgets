@@ -88,6 +88,7 @@ class IncomeLoader:
                     pbar.update(1)
         
         if not results:
+            print("[Download] No data collected - all API calls may have failed")
             return pd.DataFrame()
         
         print(f"[Download] Creating DataFrame from {len(results)} rows...")
