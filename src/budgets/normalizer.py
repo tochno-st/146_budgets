@@ -27,7 +27,7 @@ class DataNormalizer:
             "Херсонская область"
         ]
         rows_before = len(df)
-        df = df[~df[region_col].isin(excluded_regions)]
+        df = df[~df[region_col].isin(excluded_regions)].copy()
         rows_removed = rows_before - len(df)
         if rows_removed > 0:
             print(f"[Normalize] Removed {rows_removed} rows with excluded regions")
