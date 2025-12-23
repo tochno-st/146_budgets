@@ -18,6 +18,20 @@ class DataNormalizer:
     def normalize_regions(self, df: pd.DataFrame, region_col: str = "region") -> pd.DataFrame:
         """Normalize region names and add okato, oktmo, object_level columns"""
         print(f"[Normalize] Matching regions for {len(df)} rows...")
+        
+        # Remove rows with excluded regions
+        excluded_regions = [
+            "Донецкая Народная Республика",
+            "Запорожская область",
+            "Луганская Народная Республика",
+            "Херсонская область"
+        ]
+        rows_before = len(df)
+        df = df[~df[region_col].isin(excluded_regions)]
+        rows_removed = rows_before - len(df)
+        if rows_removed > 0:
+            print(f"[Normalize] Removed {rows_removed} rows with excluded regions")
+        
         df = self.matcher.match_dataframe(
             df,
             region_col,
