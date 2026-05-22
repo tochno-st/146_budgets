@@ -74,7 +74,8 @@ class ExpenseLoader:
         
         results = []
         total = len(regions) * len(dates_to_load)
-        
+        failed = []
+
         with tqdm(total=total, desc="Downloading expenses") as pbar:
             for reg in regions:
                 for date in dates_to_load:
@@ -85,7 +86,32 @@ class ExpenseLoader:
                         results.extend(data)
                     except Exception as e:
                         print(f"Error {reg[1]} {date[0]}: {e}")
+                        failed.append((reg, date))
                     pbar.update(1)
+
+        max_retries = 5
+        for retry_num in range(1, max_retries + 1):
+            if not failed:
+                break
+            print(f"Retrying {len(failed)} failed items (attempt {retry_num}/{max_retries})...")
+            still_failed = []
+            for reg, date in failed:
+                try:
+                    data = self.api.get_expense_data(reg[0], date[0])
+                    for row in data:
+                        row.extend([reg[0], reg[1], date[0][:4], date[0][5:7]])
+                    results.extend(data)
+                except Exception as e:
+                    print(f"Error {reg[1]} {date[0]}: {e}")
+                    still_failed.append((reg, date))
+            failed = still_failed
+
+        if failed:
+            failed_list = ", ".join(f"{reg[1]} {date[0][:7]}" for reg, date in failed)
+            raise RuntimeError(
+                f"Failed to download expense data for {len(failed)} region-date pairs "
+                f"after {max_retries} retries: {failed_list}"
+            )
         
         if not results:
             print("[Download] No data collected - all API calls may have failed")
