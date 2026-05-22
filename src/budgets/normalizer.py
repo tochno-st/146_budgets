@@ -41,8 +41,8 @@ class DataNormalizer:
         ).drop(columns=[region_col, "levenshtein_score"])
         
         print("[Normalize] Attaching okato, oktmo, level fields...")
-        df = self.matcher.attach_fields(df, "ter", ["okato", "oktmo", "level"])
-        df = df.rename(columns={"ter": "object_name", "level": "object_level"})
+        df = self.matcher.attach_fields(df, "object_name", ["okato", "oktmo", "level"])
+        df = df.rename(columns={"level": "object_level"})
         print("[Normalize] Region normalization complete")
         return df
     
