@@ -45,9 +45,6 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
       
-      - name: Install gh CLI
-        run: which gh || (sudo apt-get update -q && sudo apt-get install -y gh)
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
