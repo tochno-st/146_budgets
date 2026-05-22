@@ -42,6 +42,7 @@ env/
 data/processed/*.parquet
 data/processed/*.csv
 data/processed/*.xlsx
+data/processed/*.zip
 data/interim/*
 data/raw/*
 !data/*/.gitkeep

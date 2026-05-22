@@ -45,37 +45,41 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
       
+      - name: Install gh CLI
+        run: which gh || (sudo apt-get update -q && sudo apt-get install -y gh)
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      
+
       - name: Download existing data from latest release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p data/processed
-          
-          # Try to download from latest release
-          LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || echo "")
-          
-          if [ -n "$LATEST_TAG" ]; then
-            echo "Downloading from release: $LATEST_TAG"
-            # Download parquet zip files and extract them
-            gh release download "$LATEST_TAG" --pattern "data_budget_*_parquet.zip" --dir data/processed || echo "No parquet zip files in release"
-            
-            # Extract parquet files from zips
-            cd data/processed
-            for zipfile in data_budget_*_parquet.zip; do
-              if [ -f "$zipfile" ]; then
-                unzip -o "$zipfile"
-                rm "$zipfile"
-              fi
-            done
-            cd ../..
-          else
-            echo "No previous releases found, starting fresh"
+
+          LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No releases found, starting fresh"
+            exit 0
           fi
+
+          echo "Found release: $LATEST_TAG"
+          gh release download "$LATEST_TAG" --pattern "data_budget_*_parquet.zip" --dir data/processed
+
+          cd data/processed
+          for zipfile in data_budget_*_parquet.zip; do
+            if [ -f "$zipfile" ]; then
+              unzip -o "$zipfile"
+              rm "$zipfile"
+            fi
+          done
+          cd ../..
+
+          echo "Parquet files in data/processed:"
+          ls data/processed/data_budget_*.parquet 2>/dev/null || echo "  (none found)"
       
       - name: Run budget updater
         id: updater
