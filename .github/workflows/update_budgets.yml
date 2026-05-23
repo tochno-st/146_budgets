@@ -54,6 +54,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
           mkdir -p data/processed
 
           LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
@@ -126,6 +128,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
           BASE_DATE=$(date +%Y.%m.%d)
           BASE_VERSION="v${BASE_DATE}"
           
@@ -147,6 +151,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
           # Check if any zip files were generated
           if ls data/processed/data_budget_*.zip 1>/dev/null 2>&1; then
             # Build release notes with added months info
