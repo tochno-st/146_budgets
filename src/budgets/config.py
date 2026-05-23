@@ -31,8 +31,11 @@ class Config:
     normalizer_threshold: int = 70
     
     request_delay: float = 0.5
-    
+
     # Retry settings
     max_retries: int = 3
     retry_delay: float = 5.0  # seconds between retries
+
+    # Concurrency settings
+    max_workers: int = 10
 

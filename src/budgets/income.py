@@ -1,4 +1,5 @@
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional, List, Tuple
 from tqdm import tqdm
 from .config import Config
@@ -73,17 +74,22 @@ class IncomeLoader:
         regions = self.api.get_regions()
         
         results = []
-        total = len(regions) * len(dates_to_load)
+        tasks = [(reg, date) for reg in regions for date in dates_to_load]
         failed = []
 
-        with tqdm(total=total, desc="Downloading income") as pbar:
-            for reg in regions:
-                for date in dates_to_load:
+        def fetch_one(reg, date):
+            data = self.api.get_income_data(reg[0], date[0])
+            for row in data:
+                row.extend([reg[0], reg[1], date[0][:4], date[0][5:7]])
+            return data
+
+        with tqdm(total=len(tasks), desc="Downloading income") as pbar:
+            with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+                future_to_task = {executor.submit(fetch_one, reg, date): (reg, date) for reg, date in tasks}
+                for future in as_completed(future_to_task):
+                    reg, date = future_to_task[future]
                     try:
-                        data = self.api.get_income_data(reg[0], date[0])
-                        for row in data:
-                            row.extend([reg[0], reg[1], date[0][:4], date[0][5:7]])
-                        results.extend(data)
+                        results.extend(future.result())
                     except Exception as e:
                         print(f"Error {reg[1]} {date[0]}: {e}")
                         failed.append((reg, date))
@@ -97,10 +103,7 @@ class IncomeLoader:
             still_failed = []
             for reg, date in failed:
                 try:
-                    data = self.api.get_income_data(reg[0], date[0])
-                    for row in data:
-                        row.extend([reg[0], reg[1], date[0][:4], date[0][5:7]])
-                    results.extend(data)
+                    results.extend(fetch_one(reg, date))
                 except Exception as e:
                     print(f"Error {reg[1]} {date[0]}: {e}")
                     still_failed.append((reg, date))
