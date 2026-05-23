@@ -1,3 +1,4 @@
+import random
 import time
 import requests
 from typing import List, Tuple, Optional
@@ -40,13 +41,13 @@ class BudgetAPI:
     def get_income_data(self, region_code: str, date_str: str) -> List[List]:
         """Get income data for a specific region and date"""
         url = f"{self.config.base_url}?uuid={self.config.income_uuid}&dataVersion=07.03.2017 07.10.12.980&dsCode=PassportFK_002_001_incomesDataAfter01052019&territory={region_code}&paramPeriod={date_str}&_dc=1737443590492"
-        time.sleep(self.config.request_delay)
+        time.sleep(self.config.request_delay + random.uniform(0, self.config.request_delay))
         return self._get(url)["data"]
     
     def get_expense_data(self, region_code: str, date_str: str) -> List[List]:
         """Get expense data for a specific region and date"""
         url = f"{self.config.base_url}?uuid={self.config.expense_uuid}&dataVersion=07.03.2017 07.11.21.305&dsCode=PassportFK_002_002_outcomesDataAfter01052019&territory={region_code}&PassportFK_002_002_outcomesType=2&paramPeriod={date_str}&_dc=1765489263390"
-        time.sleep(self.config.request_delay)
+        time.sleep(self.config.request_delay + random.uniform(0, self.config.request_delay))
         return self._get(url)["data"]
     
     def get_first_date(self) -> str:

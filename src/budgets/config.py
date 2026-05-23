@@ -37,5 +37,5 @@ class Config:
     retry_delay: float = 5.0  # seconds between retries
 
     # Concurrency settings
-    max_workers: int = 10
+    max_workers: int = 3
 
