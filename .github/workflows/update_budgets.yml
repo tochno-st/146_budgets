@@ -30,6 +30,7 @@ env:
 jobs:
   update-data:
     runs-on: self-hosted
+    timeout-minutes: 1440
     permissions:
       contents: write
     
