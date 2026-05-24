@@ -102,7 +102,7 @@ class ExpenseLoader:
                             rows = future.result()
                             batch_results.extend(rows)
                         except Exception as e:
-                            tqdm.write(f"  Error {reg[1]} {date[0][:7]}: {e}")
+                            print(f"  Error {reg[1]} {date[0][:7]}: {e}", flush=True)
                             batch_failed.append((reg, date))
 
                         state = reg_done.setdefault(reg[0], {"done": 0, "rows": 0})
@@ -110,9 +110,10 @@ class ExpenseLoader:
                         state["rows"] += len(rows)
                         if state["done"] == n_dates:
                             regions_reported += 1
-                            tqdm.write(
+                            print(
                                 f"  [{regions_reported}/{n_regions}] {reg[1]}: "
-                                f"{state['rows']} rows | total {len(results) + len(batch_results)} rows"
+                                f"{state['rows']} rows | total {len(results) + len(batch_results)} rows",
+                                flush=True
                             )
                         pbar.update(1)
 
