@@ -32,9 +32,13 @@ class Config:
     
     request_delay: float = 0.5
 
-    # Retry settings
-    max_retries: int = 3
-    retry_delay: float = 5.0  # seconds between retries
+    # Per-request retry (on timeout/network error)
+    max_retries: int = 1
+    retry_delay: float = 5.0
+
+    # Outer retry rounds: after all items fail, wait and retry the batch
+    max_outer_retries: int = 10
+    outer_retry_wait: float = 120.0  # seconds between retry rounds
 
     # Concurrency settings
     max_workers: int = 3

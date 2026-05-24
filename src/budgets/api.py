@@ -16,7 +16,7 @@ class BudgetAPI:
         
         for attempt in range(self.config.max_retries):
             try:
-                r = requests.get(url, headers=self.headers, timeout=30)
+                r = requests.get(url, headers=self.headers, timeout=90)
                 r.raise_for_status()
                 return r.json()
             except (requests.RequestException, requests.JSONDecodeError) as e:

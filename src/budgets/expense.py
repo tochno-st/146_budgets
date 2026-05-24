@@ -1,3 +1,4 @@
+import time
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional, List, Tuple
@@ -95,18 +96,23 @@ class ExpenseLoader:
                         failed.append((reg, date))
                     pbar.update(1)
 
-        max_retries = 5
-        for retry_num in range(1, max_retries + 1):
+        for retry_num in range(1, self.config.max_outer_retries + 1):
             if not failed:
                 break
-            print(f"Retrying {len(failed)} failed items (attempt {retry_num}/{max_retries})...")
+            print(f"Retrying {len(failed)} failed items (attempt {retry_num}/{self.config.max_outer_retries}), waiting {self.config.outer_retry_wait:.0f}s...")
+            time.sleep(self.config.outer_retry_wait)
             still_failed = []
-            for reg, date in failed:
-                try:
-                    results.extend(fetch_one(reg, date))
-                except Exception as e:
-                    print(f"Error {reg[1]} {date[0]}: {e}")
-                    still_failed.append((reg, date))
+            with tqdm(total=len(failed), desc=f"Retry {retry_num}") as pbar:
+                with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+                    future_to_task = {executor.submit(fetch_one, reg, date): (reg, date) for reg, date in failed}
+                    for future in as_completed(future_to_task):
+                        reg, date = future_to_task[future]
+                        try:
+                            results.extend(future.result())
+                        except Exception as e:
+                            print(f"Error {reg[1]} {date[0]}: {e}")
+                            still_failed.append((reg, date))
+                        pbar.update(1)
             failed = still_failed
 
         if failed:
