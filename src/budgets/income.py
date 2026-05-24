@@ -77,6 +77,8 @@ class IncomeLoader:
         results = []
         tasks = [(reg, date) for reg in regions for date in dates_to_load]
         failed = []
+        n_regions = len(regions)
+        n_dates = len(dates_to_load)
 
         def fetch_one(reg, date):
             data = self.api.get_income_data(reg[0], date[0])
@@ -84,42 +86,54 @@ class IncomeLoader:
                 row.extend([reg[0], reg[1], date[0][:4], date[0][5:7]])
             return data
 
-        with tqdm(total=len(tasks), desc="Downloading income") as pbar:
-            with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
-                future_to_task = {executor.submit(fetch_one, reg, date): (reg, date) for reg, date in tasks}
-                for future in as_completed(future_to_task):
-                    reg, date = future_to_task[future]
-                    try:
-                        results.extend(future.result())
-                    except Exception as e:
-                        print(f"Error {reg[1]} {date[0]}: {e}")
-                        failed.append((reg, date))
-                    pbar.update(1)
+        def run_batch(batch, desc):
+            batch_results = []
+            batch_failed = []
+            reg_done = {}  # reg_code -> {done, rows}
+            regions_reported = 0
+
+            with tqdm(total=len(batch), desc=desc) as pbar:
+                with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+                    future_to_task = {executor.submit(fetch_one, reg, date): (reg, date) for reg, date in batch}
+                    for future in as_completed(future_to_task):
+                        reg, date = future_to_task[future]
+                        rows = []
+                        try:
+                            rows = future.result()
+                            batch_results.extend(rows)
+                        except Exception as e:
+                            tqdm.write(f"  Error {reg[1]} {date[0][:7]}: {e}")
+                            batch_failed.append((reg, date))
+
+                        state = reg_done.setdefault(reg[0], {"done": 0, "rows": 0})
+                        state["done"] += 1
+                        state["rows"] += len(rows)
+                        if state["done"] == n_dates:
+                            regions_reported += 1
+                            tqdm.write(
+                                f"  [{regions_reported}/{n_regions}] {reg[1]}: "
+                                f"{state['rows']} rows | total {len(results) + len(batch_results)} rows"
+                            )
+                        pbar.update(1)
+
+            return batch_results, batch_failed
+
+        new_results, failed = run_batch(tasks, "Downloading income")
+        results.extend(new_results)
 
         for retry_num in range(1, self.config.max_outer_retries + 1):
             if not failed:
                 break
-            print(f"Retrying {len(failed)} failed items (attempt {retry_num}/{self.config.max_outer_retries}), waiting {self.config.outer_retry_wait:.0f}s...")
+            print(f"Retrying {len(failed)} failed items (round {retry_num}/{self.config.max_outer_retries}), waiting {self.config.outer_retry_wait:.0f}s...")
             time.sleep(self.config.outer_retry_wait)
-            still_failed = []
-            with tqdm(total=len(failed), desc=f"Retry {retry_num}") as pbar:
-                with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
-                    future_to_task = {executor.submit(fetch_one, reg, date): (reg, date) for reg, date in failed}
-                    for future in as_completed(future_to_task):
-                        reg, date = future_to_task[future]
-                        try:
-                            results.extend(future.result())
-                        except Exception as e:
-                            print(f"Error {reg[1]} {date[0]}: {e}")
-                            still_failed.append((reg, date))
-                        pbar.update(1)
-            failed = still_failed
+            new_results, failed = run_batch(failed, f"Retry {retry_num}")
+            results.extend(new_results)
 
         if failed:
             failed_list = ", ".join(f"{reg[1]} {date[0][:7]}" for reg, date in failed)
             raise RuntimeError(
                 f"Failed to download income data for {len(failed)} region-date pairs "
-                f"after {max_retries} retries: {failed_list}"
+                f"after {self.config.max_outer_retries} retries: {failed_list}"
             )
         
         if not results:
