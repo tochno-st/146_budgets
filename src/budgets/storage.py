@@ -134,11 +134,12 @@ class StorageManager:
         print(f"Uploaded to S3: s3://{self.config.s3_bucket}/{s3_key}")
         return s3_key
     
-    def merge_data(self, old_df: Optional[pd.DataFrame], new_df: pd.DataFrame) -> pd.DataFrame:
+    def merge_data(self, old_df: Optional[pd.DataFrame], new_df: pd.DataFrame,
+                   subset: Optional[list] = None) -> pd.DataFrame:
         """Merge old and new dataframes, removing duplicates"""
         if old_df is None:
-            return new_df.sort_values(["year", "month"]).drop_duplicates()
-        return pd.concat([old_df, new_df]).sort_values(["year", "month"]).drop_duplicates()
+            return new_df.sort_values(["year", "month"]).drop_duplicates(subset=subset)
+        return pd.concat([old_df, new_df]).sort_values(["year", "month"]).drop_duplicates(subset=subset)
     
     def get_existing_dates(self, df: pd.DataFrame) -> list:
         """Get list of existing year-month combinations"""

@@ -125,7 +125,7 @@ class ExpenseLoader:
         for retry_num in range(1, self.config.max_outer_retries + 1):
             if not failed:
                 break
-            print(f"Retrying {len(failed)} failed items (round {retry_num}/{self.config.max_outer_retries}), waiting {self.config.outer_retry_wait:.0f}s...")
+            print(f"Retrying {len(failed)} failed items (round {retry_num}/{self.config.max_outer_retries}), waiting {self.config.outer_retry_wait:.0f}s...", flush=True)
             time.sleep(self.config.outer_retry_wait)
             new_results, failed = run_batch(failed, f"Retry {retry_num}")
             results.extend(new_results)
@@ -141,9 +141,9 @@ class ExpenseLoader:
             print("[Download] No data collected - all API calls may have failed")
             return pd.DataFrame()
         
-        print(f"[Download] Creating DataFrame from {len(results)} rows...")
+        print(f"[Download] Creating DataFrame from {len(results)} rows...", flush=True)
         df = pd.DataFrame(results, columns=EXPENSE_COLUMNS)
         df = df.drop(columns=["okato_temp"])
-        print("[Download] Starting normalization...")
+        print("[Download] Starting normalization...", flush=True)
         return self.normalizer.normalize_expense(df)
 
