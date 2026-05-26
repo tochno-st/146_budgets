@@ -82,10 +82,12 @@ class BudgetUpdater:
             print("No new income data to add")
             return {"status": "no_update", "files": []}
         
+        print(f"[Merge] Merging with existing data ({len(old_df) if old_df is not None else 0} rows)...", flush=True)
         merged_df = self.storage.merge_data(
             old_df, new_df,
             subset=["year", "month", "income_level", "income_part", "object_name"]
         )
+        print(f"[Merge] Done: {len(merged_df)} rows total", flush=True)
 
         # Generate version and filename
         ver = version or self._get_version(output_dir)
@@ -132,10 +134,12 @@ class BudgetUpdater:
             print("No new expense data to add")
             return {"status": "no_update", "files": []}
         
+        print(f"[Merge] Merging with existing data ({len(old_df) if old_df is not None else 0} rows)...", flush=True)
         merged_df = self.storage.merge_data(
             old_df, new_df,
             subset=["year", "month", "expense_level", "expense_part", "object_name"]
         )
+        print(f"[Merge] Done: {len(merged_df)} rows total", flush=True)
         # Apply expense_level fixes to all data (including previously gathered)
         merged_df = self.normalizer.fix_expense_levels(merged_df)
         

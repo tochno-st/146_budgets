@@ -48,29 +48,28 @@ class StorageManager:
         """Save dataframe to local files in multiple formats"""
         if formats is None:
             formats = ["parquet", "csv", "xlsx"]
-        
+
         Path(base_path).parent.mkdir(parents=True, exist_ok=True)
-        
-        # Excel has a maximum row limit of 1,048,576
+
         EXCEL_MAX_ROWS = 1_048_576
-        
+
         saved_files = []
         for fmt in formats:
             filepath = f"{base_path}.{fmt}"
+            print(f"[Save] Writing {fmt} ({len(df):,} rows)...", flush=True)
             if fmt == "parquet":
                 df.to_parquet(filepath, index=False)
             elif fmt == "csv":
                 df.to_csv(filepath, index=False)
             elif fmt == "xlsx":
                 if len(df) > EXCEL_MAX_ROWS:
-                    # Split by year and save to zip archive
                     zip_path = self._save_excel_split_by_year(df, base_path)
                     saved_files.append(zip_path)
-                    print(f"Saved: {zip_path}")
+                    print(f"Saved: {zip_path}", flush=True)
                     continue
                 df.to_excel(filepath, index=False)
             saved_files.append(filepath)
-            print(f"Saved: {filepath}")
+            print(f"Saved: {filepath}", flush=True)
         return saved_files
     
     def _save_excel_split_by_year(self, df: pd.DataFrame, base_path: str) -> str:
@@ -80,18 +79,19 @@ class StorageManager:
         base_name = Path(base_path).name
         zip_path = f"{base_path}_xlsx.zip"
         
-        print(f"DataFrame has {len(df):,} rows, splitting by year for Excel export...")
-        
+        print(f"DataFrame has {len(df):,} rows, splitting by year for Excel export...", flush=True)
+
         with tempfile.TemporaryDirectory() as temp_dir:
             excel_files = []
-            
+
             for year in sorted(df["year"].unique()):
                 year_df = df[df["year"] == year]
                 excel_filename = f"{base_name}_{year}.xlsx"
                 excel_path = os.path.join(temp_dir, excel_filename)
+                print(f"  Writing {excel_filename} ({len(year_df):,} rows)...", flush=True)
                 year_df.to_excel(excel_path, index=False)
                 excel_files.append((excel_path, excel_filename))
-                print(f"  Created: {excel_filename} ({len(year_df):,} rows)")
+                print(f"  Created: {excel_filename}", flush=True)
             
             # Create zip archive with all Excel files
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -114,7 +114,7 @@ class StorageManager:
                 zf.write(filepath, path.name)
             
             zip_files.append(str(zip_path))
-            print(f"Created zip: {zip_path}")
+            print(f"Created zip: {zip_path}", flush=True)
         
         return zip_files
     
